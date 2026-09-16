@@ -1,88 +1,172 @@
-# Engine — Ray-Traced Reflections + a Real Scene
+# DX12 Renderer
 
-A from-scratch C++ / DirectX 12 rendering engine foundation for Windows.
+A C++ / DirectX 12 rendering engine that I'm building from scratch to learn how modern game rendering works at a lower level.
 
-**⚠️ Honest note on this step:** DXR is the most intricate API surface in this whole engine (acceleration structures, a raytracing pipeline state object, shader tables with per-instance local root arguments), and it was written without being able to compile or run it on real hardware first. Everything here follows the standard, well-documented DXR patterns closely, and one real mistake (a UAV resource created in the wrong initial state) was caught and fixed during writing - but if `Engine: DXR` shows **Off** in the title bar on a card that should support it, or the mirror sphere looks wrong, that's the first place to look. The engine is designed to degrade gracefully: if DXR setup fails for any reason (old driver, missing `dxcompiler.dll`/`dxil.dll`, hardware below Tier 1.0), it logs a warning and falls back to the IBL-only reflections from the previous step - it does not crash or refuse to run.
+The project started as a simple D3D12 triangle and has gradually grown into a small real-time renderer with PBR materials, deferred rendering, image-based lighting and DirectX Raytracing.
 
-## Build
+The main goal isn't to build another game engine. It's to understand what actually happens underneath engines like Unreal Engine and to experiment with modern rendering techniques myself.
 
-```powershell
-cmake -S . -B build
-cmake --build build --config Release
+## Current Features
+
+* DirectX 12 renderer
+* Win32 window and input handling
+* Automatic GPU adapter selection
+* D3D12 debug layer support
+* Triple-buffered swap chain
+* GPU/CPU synchronization with fences
+* GPU timestamp queries
+* OBJ model loading
+* Texture loading through WIC
+* FPS-style camera
+* PBR materials
+* Cook-Torrance BRDF
+* GGX distribution
+* Smith visibility function
+* Fresnel-Schlick
+* Normal mapping
+* Metallic/roughness materials
+* Directional and point lights
+* Shadow mapping with hardware PCF
+* Deferred rendering
+* G-buffer
+* Procedural sky
+* Image-based lighting
+* Diffuse irradiance
+* Prefiltered specular environment maps
+* BRDF integration LUT
+* Compute shader support
+* DirectX Raytracing reflections
+
+---
+
+## Ray-Traced Reflections
+
+The latest version of the renderer adds DXR-based reflections.
+
+The current test scene contains:
+
+* A large floor
+* A rotating showcase mesh
+* A mirror sphere
+* A rough gold sphere
+* Multiple lights
+* Image-based lighting
+
+The renderer builds a bottom-level acceleration structure for each object and a top-level acceleration structure for the scene.
+
+Reflection rays are fired for sufficiently smooth surfaces. The mirror sphere uses ray-traced reflections, while rougher materials fall back to the prefiltered IBL environment map.
+
+The current implementation intentionally uses **single-bounce reflections**. I wanted to get a working and understandable DXR pipeline in place before adding more complicated recursion and denoising.
+
+### DXR pipeline
+
+```text
+Scene
+  ↓
+BLAS
+  ↓
+TLAS
+  ↓
+Ray Generation Shader
+  ↓
+Reflection Ray
+  ↓
+Closest Hit Shader
+  ↓
+Reflected Lighting
+  ↓
+Reflection Texture
+  ↓
+Final Lighting
 ```
 
-or open the generated `build/Engine.sln` in Visual Studio.
+The closest-hit shader also fetches the hit triangle's vertex and index data so that reflections use the actual geometry and surface normals instead of simply treating objects as flat silhouettes.
 
-**New build dependency:** ray-traced reflections are compiled with DXC (not the legacy FXC-based D3DCompiler every other shader here uses), which needs `dxcompiler.dll` + `dxil.dll` next to `Engine.exe` at runtime. CMake tries to copy both from your Windows SDK install automatically; if it can't find them, it prints a `WARNING` at configure time and copies neither, in which case DXR safely fails to initialize at startup (see above) rather than crashing. To fix that: manually copy `dxcompiler.dll` and `dxil.dll` from `<Windows SDK>\Redist\D3D\x64\` (or download them from the [DirectXShaderCompiler releases](https://github.com/microsoft/DirectXShaderCompiler/releases)) into `build/bin/Release/` (or `Debug/`) next to `Engine.exe`.
+---
 
-Controls:
-- **Hold Right Mouse Button** — enables mouse-look; while held: **WASD** to move, **Shift** to move faster, **E/Space** up, **Q/Ctrl** down.
-- **F1** — toggle VSync.
-- **F11 / Alt+Enter** — toggle fullscreen.
-- **Esc** — quit.
+## Real Scene
 
-Drop any of these into `assets/` and the engine picks them up automatically (any missing one falls back to a procedural default): `model.obj`, `albedo.png`/`.jpg`/`.bmp`, `normal.png`, `metallicRoughness.png` (G=roughness, B=metallic), `ao.png`. Per-object subfolders (`assets/floor/`, `assets/mirror/`, `assets/gold/`) let you override individual scene objects the same way.
+The renderer is no longer limited to a single hardcoded object.
 
-## What's in Phase 1 (D3D12 foundation)
+The current scene is built from separate meshes, materials and transforms:
 
-Win32 window with a title-bar overlay (FPS, CPU/GPU frame time, resolution, VSync, DXR status); D3D12 device with automatic adapter selection and debug-layer validation; triple-buffered swap chain; fence-based GPU/CPU sync; default-heap vertex/index buffers; GPU timestamp queries.
+```text
+Scene
+├── Floor
+├── Showcase Mesh
+├── Mirror Sphere
+└── Gold Sphere
+```
 
-## What Phase 2 added
+Meshes can be loaded from `assets/`, and procedural geometry is also available for basic shapes such as planes and spheres.
 
-Wavefront OBJ loading; an FPS camera controller (WASD + mouse-look while RMB held); WIC-based texture loading with procedural fallbacks.
+---
 
-## What Phase 3 added
+## Rendering Pipeline
 
-Cook-Torrance PBR shading (GGX, Smith, Fresnel-Schlick); normal mapping via computed tangents; a metallic-roughness material system.
+The current rendering pipeline roughly looks like this:
 
-## What Phase 4 added
+```text
+Geometry
+    ↓
+G-Buffer
+    ↓
+Deferred Lighting
+    ↓
+Image-Based Lighting
+    ↓
+Ray-Traced Reflections
+    ↓
+Back Buffer
+```
 
-A real light list (one directional sun + point lights); shadow mapping for the directional light via a depth-only pass + hardware PCF.
+The G-buffer stores the information needed by the lighting pass, allowing lighting to be calculated once for each covered pixel instead of once per object.
 
-## What Phase 5 added
+---
 
-Deferred shading: a G-buffer geometry pass plus a full-screen lighting pass that shades once per covered pixel, reconstructing world position from depth.
+## Image-Based Lighting
 
-## What the Image-Based Lighting step added
+Before adding DXR, I implemented image-based lighting using a procedural sky.
 
-A procedural sky, diffuse irradiance convolution, prefiltered specular environment map, and a BRDF integration LUT - all precomputed once via **compute shaders** (the engine's first use of the compute pipeline) - replacing the flat ambient constant with real sky-colored ambient lighting.
+The renderer generates:
 
-## What this step adds: DXR reflections + a real scene
+* Diffuse irradiance
+* Prefiltered specular environment maps
+* BRDF integration LUT
 
-- **A real scene** (`Graphics/Scene`): a 14×14 floor, the original rotating showcase mesh, a mirror-smooth sphere, and a rougher gold sphere - replacing the single hardcoded object every earlier phase rendered. Each object gets its own mesh, material, and transform; the G-buffer and shadow passes now loop over all of them (`Graphics/D3D12Renderer`'s per-object constant-buffer slots: `frameIndex * kMaxSceneObjects + objectIndex`).
-- **New procedural mesh generators** (`Rendering/Mesh`): `CreateUVSphere` and `CreatePlane`, alongside the existing cube and OBJ loader.
-- **Ray-traced reflections** (`Graphics/Raytracing`, `shaders/RaytracingReflections.hlsl`): one bottom-level acceleration structure per object (built once), one top-level acceleration structure rebuilt every frame (objects move/rotate), and a small raytracing pipeline that fires one reflection ray per pixel whose roughness is below a threshold (0.35) - the mirror sphere gets sharp, genuinely traced reflections of the rest of the scene; the gold sphere and everything rougher keeps using the prefiltered IBL cubemap from the previous step. Reflections are single-bounce: the closest-hit shader shades directly (one light, no shadow, plus a cheap diffuse-IBL ambient term) rather than recursing into a second `TraceRay` - a deliberate, named scope cut, not an oversight.
-- **Per-instance shading in the closest-hit shader**: rather than flat-coloring hit objects, the hit shader fetches the actual triangle's vertices out of a **local root signature**-bound raw vertex/index buffer pair (one per instance) and interpolates the real surface normal via barycentrics - so reflections show correctly-shaded geometry, not silhouettes.
-- **DXC as a second shader compiler**: DXR shader libraries require DXIL (shader model 6.3+), which the legacy D3DCompiler used everywhere else in this engine cannot produce. `Graphics/Raytracing.cpp` compiles `RaytracingReflections.hlsl` with DXC directly.
-- **Graceful degradation**: `RaytracingContext::IsUsable()` gates every DXR code path; hardware/driver/DLL failures fall back to the IBL-only rendering from the previous step, logged clearly, without crashing.
+These are generated using compute shaders and provide ambient lighting based on the environment.
 
-## Roadmap
+This also gives the renderer a fallback for surfaces where ray-traced reflections aren't being used.
 
-| Phase | Focus |
-|---|---|
-| 1 | D3D12 foundation + triangle |
-| 2 | 3D meshes, camera controller, textures |
-| 3 | PBR + materials |
-| 4 | Lighting + shadows |
-| 5 | Deferred / Forward+ rendering |
-| — | Image-Based Lighting |
-| — | **Ray-traced reflections + real scene** *(this)* |
-| 6 | GPU culling + indirect drawing |
-| 7 | Render graph |
-| 8 | (folded into this step) |
-| 9 | (folded into this step) |
-| 10 | Temporal accumulation + denoising |
-| 11 | Global illumination |
-| 12 | Game engine integration |
+---
 
-Forward-looking decisions already baked in so these don't require a rewrite:
-- `MeshData`'s plain interleaved-vertex/32-bit-index layout is exactly what `Graphics/Raytracing.cpp` feeds straight into a BLAS geometry desc, with no conversion step - the format was chosen with this in mind back in Phase 2.
-- The closest-hit shader's raw-buffer vertex fetch generalizes directly to more materials or per-vertex data later (e.g. vertex colors) - it's already reading arbitrary byte offsets, not a fixed struct binding.
-- `RaytracingContext`'s output texture always exists and is always bound, regardless of hardware support - adding ray-traced shadows or GI later means adding another such texture + a `roughness`-style gating value, not restructuring the binding model.
-- Recursion depth is capped at 1 (single-bounce) on purpose; a future multi-bounce mode is a `MaxTraceRecursionDepth` and shader-side recursion change, not an architecture change.
+## PBR
 
+Materials use a Cook-Torrance physically based BRDF.
 
+The renderer currently supports:
 
+* Albedo
+* Metallic
+* Roughness
+* Normal maps
+* Ambient occlusion
 
+The lighting implementation uses GGX, Smith visibility and Fresnel-Schlick.
 
+---
 
+## Shadows
+
+Directional shadows are implemented using a depth-only shadow pass.
+
+The lighting pass uses the shadow map with hardware PCF to soften the shadow edges.
+
+---
+
+## Camera Controls
+
+| Input     | Action |
+| --------- | ------ |
+| `W A S D` | Move   |
+| `R        |        |
