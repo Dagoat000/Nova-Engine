@@ -1,0 +1,13 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<Project ToolsVersion="18.0" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
+  <ItemGroup>
+    <CustomBuild Include="C:\Users\jbmaa\Desktop\Nova Engine\CMakeFiles\fc210be3cb21fd2d06731ce17ddb0e1e\generate.stamp.rule">
+      <Filter>CMake Rules</Filter>
+    </CustomBuild>
+  </ItemGroup>
+  <ItemGroup>
+    <Filter Include="CMake Rules">
+      <UniqueIdentifier>{2C6E4FA2-55C7-3036-9407-E9371A4E4B14}</UniqueIdentifier>
+    </Filter>
+  </ItemGroup>
+</Project>

@@ -271,9 +271,42 @@ namespace gfx
             return resource;
         };
 
-        struct SkyConstants { XMFLOAT3 sunDir; float sunIntensity; XMFLOAT3 sunColor; float sunSharpness; XMFLOAT3 horizon; float _p0; XMFLOAT3 zenith; float _p1; };
-        SkyConstants skyConstants{ sunDirection, sunIntensity, sunColor, 256.0f, { 0.55f, 0.62f, 0.72f }, 0.0f, { 0.10f, 0.22f, 0.45f }, 0.0f };
-        m_startupUploadsLeakedIntentionally.push_back(makeUploadCb(&skyConstants, sizeof(skyConstants), L"SkyConstantsCB"));
+        struct SkyConstants
+        {
+            XMFLOAT3 sunDir;
+            float sunIntensity;
+
+            XMFLOAT3 sunColor;
+            float sunSharpness;
+
+            XMFLOAT3 horizon;
+            float _p0;
+
+            XMFLOAT3 zenith;
+            float _p1;
+        };
+
+        SkyConstants skyConstants{
+    sunDirection,
+    sunIntensity,
+
+    sunColor,
+    256.0f,
+
+    { 0.22f, 0.38f, 0.62f },
+    0.0f,
+
+    { 0.012f, 0.045f, 0.16f },
+    0.0f
+        };
+
+        m_startupUploadsLeakedIntentionally.push_back(
+            makeUploadCb(
+                &skyConstants,
+                sizeof(skyConstants),
+                L"SkyConstantsCB"
+            )
+        );
 
         // --- Pass 1: sky (6 dispatches, one per face) ---
         cmdList->SetPipelineState(m_skyPso.Get());
@@ -371,31 +404,90 @@ namespace gfx
         cmdList->ResourceBarrier(3, finalBarriers);
     }
 
-    void EnvironmentMap::CreateShaderResourceViews(ID3D12Device* device, DescriptorHeap& srvHeap)
+    void EnvironmentMap::CreateShaderResourceViews(
+        ID3D12Device* device,
+        DescriptorHeap& srvHeap)
     {
         m_srvBaseIndex = srvHeap.Allocate();
         srvHeap.Allocate();
         srvHeap.Allocate();
         srvHeap.Allocate();
 
-        D3D12_SHADER_RESOURCE_VIEW_DESC srvDesc{};
-        srvDesc.Shader4ComponentMapping = D3D12_DEFAULT_SHADER_4_COMPONENT_MAPPING;
+        // ------------------------------------------------------------
+        // Sky cubemap
+        // ------------------------------------------------------------
+        D3D12_SHADER_RESOURCE_VIEW_DESC skySrv{};
+        skySrv.Format = kEnvMapFormat;
+        skySrv.ViewDimension = D3D12_SRV_DIMENSION_TEXTURECUBE;
+        skySrv.Shader4ComponentMapping =
+            D3D12_DEFAULT_SHADER_4_COMPONENT_MAPPING;
 
-        srvDesc.Format = kEnvMapFormat;
-        srvDesc.ViewDimension = D3D12_SRV_DIMENSION_TEXTURECUBE;
-        srvDesc.TextureCube.MipLevels = 1;
-        device->CreateShaderResourceView(m_sky.Get(), &srvDesc, srvHeap.GetCpuHandle(m_srvBaseIndex + 0));
-        device->CreateShaderResourceView(m_irradiance.Get(), &srvDesc, srvHeap.GetCpuHandle(m_srvBaseIndex + 1));
+        skySrv.TextureCube.MostDetailedMip = 0;
+        skySrv.TextureCube.MipLevels = 1;
+        skySrv.TextureCube.ResourceMinLODClamp = 0.0f;
 
-        srvDesc.TextureCube.MipLevels = kPrefilterMipCount;
-        device->CreateShaderResourceView(m_prefiltered.Get(), &srvDesc, srvHeap.GetCpuHandle(m_srvBaseIndex + 2));
+        device->CreateShaderResourceView(
+            m_sky.Get(),
+            &skySrv,
+            srvHeap.GetCpuHandle(m_srvBaseIndex + 0)
+        );
 
-        D3D12_SHADER_RESOURCE_VIEW_DESC lutSrvDesc{};
-        lutSrvDesc.Format = kBrdfLutFormat;
-        lutSrvDesc.ViewDimension = D3D12_SRV_DIMENSION_TEXTURE2D;
-        lutSrvDesc.Shader4ComponentMapping = D3D12_DEFAULT_SHADER_4_COMPONENT_MAPPING;
-        lutSrvDesc.Texture2D.MipLevels = 1;
-        device->CreateShaderResourceView(m_brdfLut.Get(), &lutSrvDesc, srvHeap.GetCpuHandle(m_srvBaseIndex + 3));
+        // ------------------------------------------------------------
+        // Irradiance cubemap
+        // ------------------------------------------------------------
+        D3D12_SHADER_RESOURCE_VIEW_DESC irradianceSrv{};
+        irradianceSrv.Format = kEnvMapFormat;
+        irradianceSrv.ViewDimension = D3D12_SRV_DIMENSION_TEXTURECUBE;
+        irradianceSrv.Shader4ComponentMapping =
+            D3D12_DEFAULT_SHADER_4_COMPONENT_MAPPING;
+
+        irradianceSrv.TextureCube.MostDetailedMip = 0;
+        irradianceSrv.TextureCube.MipLevels = 1;
+        irradianceSrv.TextureCube.ResourceMinLODClamp = 0.0f;
+
+        device->CreateShaderResourceView(
+            m_irradiance.Get(),
+            &irradianceSrv,
+            srvHeap.GetCpuHandle(m_srvBaseIndex + 1)
+        );
+
+        // ------------------------------------------------------------
+        // Prefiltered cubemap
+        // ------------------------------------------------------------
+        D3D12_SHADER_RESOURCE_VIEW_DESC prefilteredSrv{};
+        prefilteredSrv.Format = kEnvMapFormat;
+        prefilteredSrv.ViewDimension = D3D12_SRV_DIMENSION_TEXTURECUBE;
+        prefilteredSrv.Shader4ComponentMapping =
+            D3D12_DEFAULT_SHADER_4_COMPONENT_MAPPING;
+
+        prefilteredSrv.TextureCube.MostDetailedMip = 0;
+        prefilteredSrv.TextureCube.MipLevels = kPrefilterMipCount;
+        prefilteredSrv.TextureCube.ResourceMinLODClamp = 0.0f;
+
+        device->CreateShaderResourceView(
+            m_prefiltered.Get(),
+            &prefilteredSrv,
+            srvHeap.GetCpuHandle(m_srvBaseIndex + 2)
+        );
+
+        // ------------------------------------------------------------
+        // BRDF LUT
+        // ------------------------------------------------------------
+        D3D12_SHADER_RESOURCE_VIEW_DESC lutSrv{};
+        lutSrv.Format = kBrdfLutFormat;
+        lutSrv.ViewDimension = D3D12_SRV_DIMENSION_TEXTURE2D;
+        lutSrv.Shader4ComponentMapping =
+            D3D12_DEFAULT_SHADER_4_COMPONENT_MAPPING;
+
+        lutSrv.Texture2D.MostDetailedMip = 0;
+        lutSrv.Texture2D.MipLevels = 1;
+        lutSrv.Texture2D.ResourceMinLODClamp = 0.0f;
+
+        device->CreateShaderResourceView(
+            m_brdfLut.Get(),
+            &lutSrv,
+            srvHeap.GetCpuHandle(m_srvBaseIndex + 3)
+        );
     }
 
     D3D12_GPU_DESCRIPTOR_HANDLE EnvironmentMap::GetSrvTableGpuHandle(DescriptorHeap& srvHeap) const

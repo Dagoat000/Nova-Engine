@@ -184,7 +184,7 @@ namespace gfx
         shadowRange.RangeType = D3D12_DESCRIPTOR_RANGE_TYPE_SRV;
         shadowRange.NumDescriptors = 1;
         shadowRange.BaseShaderRegister = 4; // t4
-        shadowRange.Flags = D3D12_DESCRIPTOR_RANGE_FLAG_DATA_STATIC;
+        shadowRange.Flags = D3D12_DESCRIPTOR_RANGE_FLAG_DATA_VOLATILE;
         shadowRange.OffsetInDescriptorsFromTableStart = D3D12_DESCRIPTOR_RANGE_OFFSET_APPEND;
 
         // t5..t8: the environment map (sky, irradiance, prefiltered

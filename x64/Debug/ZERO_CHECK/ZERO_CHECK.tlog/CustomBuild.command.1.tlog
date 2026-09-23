@@ -1,0 +1,10 @@
+^C:\USERS\JBMAA\DESKTOP\NOVA ENGINE\CMAKEFILES\FC210BE3CB21FD2D06731CE17DDB0E1E\GENERATE.STAMP.RULE
+setlocal
+"C:\Program Files\CMake\bin\cmake.exe" "-SC:/Users/jbmaa/Desktop/Nova Engine" "-BC:/Users/jbmaa/Desktop/Nova Engine" --check-stamp-list CMakeFiles/generate.stamp.list --vs-solution-file "C:/Users/jbmaa/Desktop/Nova Engine/Engine.slnx"
+if %errorlevel% neq 0 goto :cmEnd
+:cmEnd
+endlocal & call :cmErrorLevel %errorlevel% & goto :cmDone
+:cmErrorLevel
+exit /b %1
+:cmDone
+if %errorlevel% neq 0 goto :VCEnd

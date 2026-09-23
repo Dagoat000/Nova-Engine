@@ -165,7 +165,7 @@ namespace gfx
         outputRange.RangeType = D3D12_DESCRIPTOR_RANGE_TYPE_UAV;
         outputRange.NumDescriptors = 1;
         outputRange.BaseShaderRegister = 0; // u0
-        outputRange.Flags = D3D12_DESCRIPTOR_RANGE_FLAG_DATA_STATIC;
+        outputRange.Flags = D3D12_DESCRIPTOR_RANGE_FLAG_NONE;
         outputRange.OffsetInDescriptorsFromTableStart = D3D12_DESCRIPTOR_RANGE_OFFSET_APPEND;
 
         D3D12_ROOT_PARAMETER1 globalParams[6]{};
@@ -347,8 +347,15 @@ namespace gfx
         // identifiers are fetched and written into the table buffer later,
         // in BuildBottomLevelStructures, once the buffer itself exists.
         m_raygenRecordOffset = 0;
-        m_missRecordOffset = AlignUp(kShaderIdentifierSize, D3D12_RAYTRACING_SHADER_RECORD_BYTE_ALIGNMENT);
-        m_hitGroupTableOffset = AlignUp(m_missRecordOffset + kShaderIdentifierSize, D3D12_RAYTRACING_SHADER_TABLE_BYTE_ALIGNMENT);
+
+        m_missRecordOffset = AlignUp(
+            kShaderIdentifierSize,
+            D3D12_RAYTRACING_SHADER_TABLE_BYTE_ALIGNMENT);
+
+        m_hitGroupTableOffset = AlignUp(
+            m_missRecordOffset + kShaderIdentifierSize,
+            D3D12_RAYTRACING_SHADER_TABLE_BYTE_ALIGNMENT);
+       
 
         // Hit group record: identifier + local root arguments (one 8-byte
         // descriptor-table GPU handle + 8x4-byte root constants = 40 bytes),
@@ -445,7 +452,36 @@ namespace gfx
             buildDesc.DestAccelerationStructureData = entry.blas->GetGPUVirtualAddress();
             buildDesc.ScratchAccelerationStructureData = scratch->GetGPUVirtualAddress();
 
-            cmdList4->BuildRaytracingAccelerationStructure(&buildDesc, 0, nullptr);
+            // DXR requires the geometry buffers to be readable
+// in NON_PIXEL_SHADER_RESOURCE state.
+            D3D12_RESOURCE_BARRIER geometryBarriers[2]{};
+
+            geometryBarriers[0].Type =
+                D3D12_RESOURCE_BARRIER_TYPE_TRANSITION;
+            geometryBarriers[0].Transition.pResource =
+                obj.vertexBuffer.Get();
+            geometryBarriers[0].Transition.Subresource =
+                D3D12_RESOURCE_BARRIER_ALL_SUBRESOURCES;
+            geometryBarriers[0].Transition.StateBefore =
+                D3D12_RESOURCE_STATE_VERTEX_AND_CONSTANT_BUFFER;
+            geometryBarriers[0].Transition.StateAfter =
+                D3D12_RESOURCE_STATE_NON_PIXEL_SHADER_RESOURCE;
+
+            geometryBarriers[1].Type =
+                D3D12_RESOURCE_BARRIER_TYPE_TRANSITION;
+            geometryBarriers[1].Transition.pResource =
+                obj.indexBuffer.Get();
+            geometryBarriers[1].Transition.Subresource =
+                D3D12_RESOURCE_BARRIER_ALL_SUBRESOURCES;
+            geometryBarriers[1].Transition.StateBefore =
+                D3D12_RESOURCE_STATE_INDEX_BUFFER;
+            geometryBarriers[1].Transition.StateAfter =
+                D3D12_RESOURCE_STATE_NON_PIXEL_SHADER_RESOURCE;
+
+            cmdList4->ResourceBarrier(2, geometryBarriers);
+
+            cmdList4->BuildRaytracingAccelerationStructure(
+                &buildDesc, 0, nullptr);
 
             D3D12_RESOURCE_BARRIER uavBarrier{};
             uavBarrier.Type = D3D12_RESOURCE_BARRIER_TYPE_UAV;

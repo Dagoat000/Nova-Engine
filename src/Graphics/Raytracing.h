@@ -98,7 +98,7 @@ namespace gfx
         // startup upload buffers - keeping them for the engine's lifetime
         // is simpler and cheap enough for a one-time startup cost.
         std::vector<ComPtr<ID3D12Resource>> m_blasScratchKeepAlive;
-
+        bool m_outputUavAllocated = false;
         ComPtr<ID3D12Resource> m_tlas;
         ComPtr<ID3D12Resource> m_tlasScratch;
         ComPtr<ID3D12Resource> m_instanceDescBuffer; // persistently-mapped upload buffer, rewritten every frame

@@ -1,0 +1,3 @@
+C:/Users/jbmaa/Desktop/Nova Engine/CMakeFiles/Engine.dir
+C:/Users/jbmaa/Desktop/Nova Engine/CMakeFiles/ALL_BUILD.dir
+C:/Users/jbmaa/Desktop/Nova Engine/CMakeFiles/ZERO_CHECK.dir

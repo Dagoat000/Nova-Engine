@@ -1,0 +1,158 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<Project ToolsVersion="18.0" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
+  <ItemGroup>
+    <ClCompile Include="C:\Users\jbmaa\Desktop\Nova Engine\src\Core\Application.cpp">
+      <Filter>Core</Filter>
+    </ClCompile>
+    <ClCompile Include="C:\Users\jbmaa\Desktop\Nova Engine\src\Core\Window.cpp">
+      <Filter>Core</Filter>
+    </ClCompile>
+    <ClCompile Include="C:\Users\jbmaa\Desktop\Nova Engine\src\Graphics\D3D12Renderer.cpp">
+      <Filter>Graphics</Filter>
+    </ClCompile>
+    <ClCompile Include="C:\Users\jbmaa\Desktop\Nova Engine\src\Graphics\Device.cpp">
+      <Filter>Graphics</Filter>
+    </ClCompile>
+    <ClCompile Include="C:\Users\jbmaa\Desktop\Nova Engine\src\Graphics\EnvironmentMap.cpp">
+      <Filter>Graphics</Filter>
+    </ClCompile>
+    <ClCompile Include="C:\Users\jbmaa\Desktop\Nova Engine\src\Graphics\GBuffer.cpp">
+      <Filter>Graphics</Filter>
+    </ClCompile>
+    <ClCompile Include="C:\Users\jbmaa\Desktop\Nova Engine\src\Graphics\LensFlare.cpp">
+      <Filter>Graphics</Filter>
+    </ClCompile>
+    <ClCompile Include="C:\Users\jbmaa\Desktop\Nova Engine\src\Graphics\Material.cpp">
+      <Filter>Graphics</Filter>
+    </ClCompile>
+    <ClCompile Include="C:\Users\jbmaa\Desktop\Nova Engine\src\Graphics\Pipeline.cpp">
+      <Filter>Graphics</Filter>
+    </ClCompile>
+    <ClCompile Include="C:\Users\jbmaa\Desktop\Nova Engine\src\Graphics\Raytracing.cpp">
+      <Filter>Graphics</Filter>
+    </ClCompile>
+    <ClCompile Include="C:\Users\jbmaa\Desktop\Nova Engine\src\Graphics\Scene.cpp">
+      <Filter>Graphics</Filter>
+    </ClCompile>
+    <ClCompile Include="C:\Users\jbmaa\Desktop\Nova Engine\src\Graphics\ShadowMap.cpp">
+      <Filter>Graphics</Filter>
+    </ClCompile>
+    <ClCompile Include="C:\Users\jbmaa\Desktop\Nova Engine\src\Graphics\SwapChain.cpp">
+      <Filter>Graphics</Filter>
+    </ClCompile>
+    <ClCompile Include="C:\Users\jbmaa\Desktop\Nova Engine\src\Graphics\Texture.cpp">
+      <Filter>Graphics</Filter>
+    </ClCompile>
+    <ClCompile Include="C:\Users\jbmaa\Desktop\Nova Engine\src\Main.cpp" />
+    <ClCompile Include="C:\Users\jbmaa\Desktop\Nova Engine\src\Rendering\Mesh.cpp">
+      <Filter>Rendering</Filter>
+    </ClCompile>
+  </ItemGroup>
+  <ItemGroup>
+    <ClInclude Include="C:\Users\jbmaa\Desktop\Nova Engine\src\Core\Application.h">
+      <Filter>Core</Filter>
+    </ClInclude>
+    <ClInclude Include="C:\Users\jbmaa\Desktop\Nova Engine\src\Core\Input.h">
+      <Filter>Core</Filter>
+    </ClInclude>
+    <ClInclude Include="C:\Users\jbmaa\Desktop\Nova Engine\src\Core\Logger.h">
+      <Filter>Core</Filter>
+    </ClInclude>
+    <ClInclude Include="C:\Users\jbmaa\Desktop\Nova Engine\src\Core\Timer.h">
+      <Filter>Core</Filter>
+    </ClInclude>
+    <ClInclude Include="C:\Users\jbmaa\Desktop\Nova Engine\src\Core\Window.h">
+      <Filter>Core</Filter>
+    </ClInclude>
+    <ClInclude Include="C:\Users\jbmaa\Desktop\Nova Engine\src\Graphics\Buffer.h">
+      <Filter>Graphics</Filter>
+    </ClInclude>
+    <ClInclude Include="C:\Users\jbmaa\Desktop\Nova Engine\src\Graphics\D3D12Renderer.h">
+      <Filter>Graphics</Filter>
+    </ClInclude>
+    <ClInclude Include="C:\Users\jbmaa\Desktop\Nova Engine\src\Graphics\DXHelper.h">
+      <Filter>Graphics</Filter>
+    </ClInclude>
+    <ClInclude Include="C:\Users\jbmaa\Desktop\Nova Engine\src\Graphics\DescriptorHeap.h">
+      <Filter>Graphics</Filter>
+    </ClInclude>
+    <ClInclude Include="C:\Users\jbmaa\Desktop\Nova Engine\src\Graphics\Device.h">
+      <Filter>Graphics</Filter>
+    </ClInclude>
+    <ClInclude Include="C:\Users\jbmaa\Desktop\Nova Engine\src\Graphics\EnvironmentMap.h">
+      <Filter>Graphics</Filter>
+    </ClInclude>
+    <ClInclude Include="C:\Users\jbmaa\Desktop\Nova Engine\src\Graphics\FrameContext.h">
+      <Filter>Graphics</Filter>
+    </ClInclude>
+    <ClInclude Include="C:\Users\jbmaa\Desktop\Nova Engine\src\Graphics\GBuffer.h">
+      <Filter>Graphics</Filter>
+    </ClInclude>
+    <ClInclude Include="C:\Users\jbmaa\Desktop\Nova Engine\src\Graphics\LensFlare.h">
+      <Filter>Graphics</Filter>
+    </ClInclude>
+    <ClInclude Include="C:\Users\jbmaa\Desktop\Nova Engine\src\Graphics\Lighting.h">
+      <Filter>Graphics</Filter>
+    </ClInclude>
+    <ClInclude Include="C:\Users\jbmaa\Desktop\Nova Engine\src\Graphics\Material.h">
+      <Filter>Graphics</Filter>
+    </ClInclude>
+    <ClInclude Include="C:\Users\jbmaa\Desktop\Nova Engine\src\Graphics\Pipeline.h">
+      <Filter>Graphics</Filter>
+    </ClInclude>
+    <ClInclude Include="C:\Users\jbmaa\Desktop\Nova Engine\src\Graphics\Raytracing.h">
+      <Filter>Graphics</Filter>
+    </ClInclude>
+    <ClInclude Include="C:\Users\jbmaa\Desktop\Nova Engine\src\Graphics\Scene.h">
+      <Filter>Graphics</Filter>
+    </ClInclude>
+    <ClInclude Include="C:\Users\jbmaa\Desktop\Nova Engine\src\Graphics\ShadowMap.h">
+      <Filter>Graphics</Filter>
+    </ClInclude>
+    <ClInclude Include="C:\Users\jbmaa\Desktop\Nova Engine\src\Graphics\SwapChain.h">
+      <Filter>Graphics</Filter>
+    </ClInclude>
+    <ClInclude Include="C:\Users\jbmaa\Desktop\Nova Engine\src\Graphics\Texture.h">
+      <Filter>Graphics</Filter>
+    </ClInclude>
+    <ClInclude Include="C:\Users\jbmaa\Desktop\Nova Engine\src\Rendering\Camera.h">
+      <Filter>Rendering</Filter>
+    </ClInclude>
+    <ClInclude Include="C:\Users\jbmaa\Desktop\Nova Engine\src\Rendering\Mesh.h">
+      <Filter>Rendering</Filter>
+    </ClInclude>
+  </ItemGroup>
+  <ItemGroup>
+    <CustomBuild Include="C:\Users\jbmaa\Desktop\Nova Engine\CMakeLists.txt" />
+  </ItemGroup>
+  <ItemGroup>
+    <Filter Include="Core">
+      <UniqueIdentifier>{FB7C7177-806A-3C2F-B616-994E8AEA582B}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Graphics">
+      <UniqueIdentifier>{053A5D4D-DC5C-30A9-ADA8-178A506E2985}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Rendering">
+      <UniqueIdentifier>{96F8EE87-DE5B-3720-BD67-6E119BA78D02}</UniqueIdentifier>
+    </Filter>
+  </ItemGroup>
+  <ItemGroup>
+    <FxCompile Include="shaders\BrdfLutCS.hlsl" />
+    <FxCompile Include="shaders\DeferredLightingPS.hlsl" />
+    <FxCompile Include="shaders\FullscreenVS.hlsl" />
+    <FxCompile Include="shaders\GBufferPS.hlsl" />
+    <FxCompile Include="shaders\GBufferVS.hlsl" />
+    <FxCompile Include="shaders\IrradianceCS.hlsl" />
+    <FxCompile Include="shaders\LensFlareComposite.hlsl" />
+    <FxCompile Include="shaders\LensFlareCS.hlsl" />
+    <FxCompile Include="shaders\postcolor.hlsl" />
+    <FxCompile Include="shaders\PrefilterCS.hlsl" />
+    <FxCompile Include="shaders\RaytracingReflections.hlsl" />
+    <FxCompile Include="shaders\ShadowVS.hlsl" />
+    <FxCompile Include="shaders\SkyCS.hlsl" />
+    <FxCompile Include="shaders\IBLCommon.hlsli" />
+  </ItemGroup>
+  <ItemGroup>
+    <None Include="shaders\Common.hlsli" />
+  </ItemGroup>
+</Project>

@@ -38,6 +38,7 @@
 #include "Graphics/Lighting.h"
 #include "Graphics/Scene.h"
 #include "Graphics/Raytracing.h"
+#include "Graphics/LensFlare.h"
 #include "Rendering/Camera.h"
 #include <DirectXMath.h>
 #include <array>
@@ -63,10 +64,14 @@ namespace gfx
     struct ScreenConstants
     {
         DirectX::XMFLOAT4X4 invViewProj;
+        DirectX::XMFLOAT4X4 viewProj;
         DirectX::XMFLOAT3 cameraPosWS;
-        float rtReflectionsThreshold = 0.0f; // set to -1 (impossible) when DXR is unusable
-    };
+        float rtReflectionsThreshold = 0.0f;
 
+        DirectX::XMFLOAT2 sunScreenPos;
+        float sunVisible = 0.0f;
+        float padding = 0.0f;
+    };
     // Mirrors shaders/ShadowVS.hlsl's ShadowConstants cbuffer (b0 in the
     // shadow pass's own, separate root signature). One per (frame, object)
     // pair - see kMaxSceneObjects below.
@@ -162,6 +167,7 @@ namespace gfx
         std::unique_ptr<GBuffer> m_gbuffer;
         std::unique_ptr<EnvironmentMap> m_environment;
         std::unique_ptr<RaytracingContext> m_raytracing;
+        LensFlare m_lensFlare;
         SceneLighting m_lighting;
 
         rendering::Camera m_camera;

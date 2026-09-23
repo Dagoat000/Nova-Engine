@@ -47,7 +47,7 @@ namespace gfx
         // the RT output's UAV+SRV, and 2 raw-buffer SRVs per object for
         // DXR's closest-hit shader.
         m_srvHeap = std::make_unique<DescriptorHeap>(
-            m_device->GetDevice(), D3D12_DESCRIPTOR_HEAP_TYPE_CBV_SRV_UAV, 128, /*shaderVisible*/ true);
+            m_device->GetDevice(), D3D12_DESCRIPTOR_HEAP_TYPE_CBV_SRV_UAV, 256, /*shaderVisible*/ true);
 
         m_shadowMap = std::make_unique<ShadowMap>(m_device->GetDevice(), 2048);
         m_shadowMap->CreateShaderResourceView(m_device->GetDevice(), *m_srvHeap);
@@ -141,6 +141,9 @@ namespace gfx
             m_raytracing->BuildBottomLevelStructures(m_device->GetDevice(), m_commandList.Get(), m_scene.GetObjects(), *m_srvHeap);
         }
 
+        m_lensFlare.Initialize(
+            m_device->GetDevice(), m_commandList.Get(), *m_srvHeap, uploadsKeepAlive);
+
         DX_CHECK(m_commandList->Close());
         ID3D12CommandList* lists[] = { m_commandList.Get() };
         m_device->GetGraphicsQueue()->ExecuteCommandLists(1, lists);
@@ -187,6 +190,7 @@ namespace gfx
         m_swapChain->Resize(width, height);
         m_gbuffer->Resize(m_device->GetDevice(), width, height, *m_srvHeap);
         m_raytracing->Resize(m_device->GetDevice(), width, height, *m_srvHeap);
+        m_lensFlare.Resize(width, height);
         m_camera.SetAspectRatio(static_cast<float>(width) / static_cast<float>(height));
     }
 
@@ -211,6 +215,52 @@ namespace gfx
         XMVECTOR viewProjDet;
         XMMATRIX invViewProj = XMMatrixInverse(&viewProjDet, viewProj);
 
+        const XMVECTOR sunDirection =
+            XMVector3Normalize(
+                -XMLoadFloat3(&m_lighting.dirLightDirection)
+            );
+
+        const XMVECTOR cameraPosition =
+            XMLoadFloat3(&m_camera.GetPosition());
+
+        const XMVECTOR sunWorldPosition =
+            cameraPosition +
+            sunDirection * 10000.0f;
+
+        const XMVECTOR sunClip =
+            XMVector4Transform(
+                XMVectorSetW(sunWorldPosition, 1.0f),
+                viewProj
+            );
+
+        XMFLOAT4 sunClipFloat;
+        XMStoreFloat4(&sunClipFloat, sunClip);
+
+        XMFLOAT2 sunScreenPos{ 0.5f, 0.5f };
+        float sunVisible = 0.0f;
+
+        if (sunClipFloat.w > 0.0f)
+        {
+            const float ndcX =
+                sunClipFloat.x / sunClipFloat.w;
+
+            const float ndcY =
+                sunClipFloat.y / sunClipFloat.w;
+
+            sunScreenPos.x =
+                ndcX * 0.5f + 0.5f;
+
+            sunScreenPos.y =
+                -ndcY * 0.5f + 0.5f;
+
+            sunVisible =
+                (sunScreenPos.x >= -0.5f &&
+                    sunScreenPos.x <= 1.5f &&
+                    sunScreenPos.y >= -0.5f &&
+                    sunScreenPos.y <= 1.5f)
+                ? 1.0f
+                : 0.0f;
+        }
         // Orthographic light frustum sized to cover the whole demo scene
         // (a 14x14 floor plus 3 objects spread ~4.4m apart) - see
         // Lighting.h's ComputeLightViewProj for how this radius maps to
@@ -225,11 +275,29 @@ namespace gfx
         // which is how DXR-unavailable hardware safely never reads the
         // (never-dispatched-into) RT output texture.
         const bool rtUsable = m_raytracing->IsUsable();
-        ScreenConstants screenConstants;
-        XMStoreFloat4x4(&screenConstants.invViewProj, XMMatrixTranspose(invViewProj));
-        screenConstants.cameraPosWS = m_camera.GetPosition();
-        screenConstants.rtReflectionsThreshold = rtUsable ? 0.35f : -1.0f;
-        m_screenConstantBuffer.Update(frameIndex, screenConstants);
+
+        ScreenConstants screenConstants{};
+
+        XMStoreFloat4x4(
+            &screenConstants.invViewProj,
+            XMMatrixTranspose(invViewProj)
+        );
+
+        XMStoreFloat4x4(
+            &screenConstants.viewProj,
+            XMMatrixTranspose(viewProj)
+        );
+
+        screenConstants.cameraPosWS =
+            m_camera.GetPosition();
+
+        screenConstants.rtReflectionsThreshold =
+            rtUsable ? 0.35f : -1.0f;
+
+        m_screenConstantBuffer.Update(
+            frameIndex,
+            screenConstants
+        );
 
         LightConstants lightConstants;
         lightConstants.dirLightDirWS = m_lighting.dirLightDirection;
@@ -420,6 +488,26 @@ namespace gfx
         // No vertex/index buffer needed - the full-screen triangle is
         // generated entirely from SV_VertexID (see shaders/FullscreenVS.hlsl).
         m_commandList->DrawInstanced(3, 1, 0, 0);
+
+        // --- Pass 5: physically based optical lens ghosts ---
+        // The reference implementation traces a 32x32 ray bundle through
+        // the Nikon 28-75mm prescription, generates the internal-reflection
+        // ghost paths, then rasterizes the resulting warped patches with
+        // additive blending. It is kept as a separate pass so the existing
+        // deferred lighting and sky colors remain untouched.
+        {
+            XMFLOAT3 sunDirectionFloat3{};
+            XMStoreFloat3(&sunDirectionFloat3, sunDirection);
+
+            m_lensFlare.Render(
+                m_commandList.Get(),
+                *m_srvHeap,
+                frameIndex,
+                sunScreenPos,
+                sunVisible,
+                m_camera.GetViewMatrix(),
+                sunDirectionFloat3);
+        }
 
         D3D12_RESOURCE_BARRIER toPresent{};
         toPresent.Type = D3D12_RESOURCE_BARRIER_TYPE_TRANSITION;

@@ -78,16 +78,57 @@ float GeometrySmith_IBL(float NdotV, float NdotL, float roughness)
 // cube, matching D3D's cubemap face convention (+X,-X,+Y,-Y,+Z,-Z).
 float3 FaceUvToDirection(uint face, float2 uv)
 {
-    float2 ndc = uv * 2.0f - 1.0f; // [0,1] -> [-1,1]
-    float3 dir;
+    float2 a = uv * 2.0f - 1.0f;
+
     switch (face)
     {
-        case 0: dir = float3(1.0f, -ndc.y, -ndc.x); break;  // +X
-        case 1: dir = float3(-1.0f, -ndc.y, ndc.x); break;  // -X
-        case 2: dir = float3(ndc.x, 1.0f, ndc.y); break;    // +Y
-        case 3: dir = float3(ndc.x, -1.0f, -ndc.y); break;  // -Y
-        case 4: dir = float3(ndc.x, -ndc.y, 1.0f); break;   // +Z
-        default: dir = float3(-ndc.x, -ndc.y, -1.0f); break; // -Z
+        // +X
+        case 0:
+            return normalize(float3(
+                1.0f,
+                -a.y,
+                -a.x
+            ));
+
+        // -X
+        case 1:
+            return normalize(float3(
+                -1.0f,
+                -a.y,
+                a.x
+            ));
+
+        // +Y
+        case 2:
+            return normalize(float3(
+                a.x,
+                1.0f,
+                a.y
+            ));
+
+        // -Y
+        case 3:
+            return normalize(float3(
+                a.x,
+                -1.0f,
+                -a.y
+            ));
+
+        // +Z
+        case 4:
+            return normalize(float3(
+                a.x,
+                -a.y,
+                1.0f
+            ));
+
+        // -Z
+        case 5:
+        default:
+            return normalize(float3(
+                -a.x,
+                -a.y,
+                -1.0f
+            ));
     }
-    return normalize(dir);
 }
